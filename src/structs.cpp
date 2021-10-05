@@ -1,5 +1,14 @@
 #include "structs.h"
 #include <opencv2/opencv.hpp>
+#include <cmath>
+#include <algorithm>
+
+Line::Line(const Coordinate::Polar &polar) : polar(polar) {}
+
+Coordinate::Cartesian Line::polar_to_cartesian() const
+{
+	return Coordinate::Cartesian(polar.r * std::cos(polar.theta), polar.r * std::sin(polar.theta));
+}
 
 /**
  * @brief Constructs image object from raw file.
@@ -8,7 +17,11 @@
  * @param height - Height of image.
 **/
 Image::Image(const std::string_view path, const uint32_t width, const uint32_t height)
-	: number_of_pixels(width* height), data(getImageBuffer(path)), width(width), height(height)
+	: samples(getImageBuffer(path, width, height)), width(width), height(height)
+{
+}
+
+Image::Image(const std::vector<uint8_t> &vec, const uint32_t width, const uint32_t height) : samples(vec), width(width), height(height)
 {
 }
 
@@ -17,24 +30,35 @@ Image::Image(const std::string_view path, const uint32_t width, const uint32_t h
  * @param path - Path to .raw file.
  * @return Image buffered as bytes
 **/
-std::vector<std::byte> Image::getImageBuffer(const std::string_view path)
+std::vector<uint8_t> Image::getImageBuffer(const std::string_view path, const uint32_t width, const uint32_t height)
 {
-	std::byte* buffer = new std::byte[number_of_pixels];
+	uint8_t *buffer = new uint8_t[width * height];
 
-	FILE* fp = fopen(path.data(), "rb");
+	FILE *fp = fopen(path.data(), "rb");
 	if (fp)
 	{
-		fread(buffer, number_of_pixels, 1, fp);
+		fread(buffer, width * height, 1, fp);
 		fclose(fp);
 	}
-	return std::vector<std::byte>(buffer, buffer + number_of_pixels);
+	std::vector<uint8_t> vec(buffer, buffer + (width * height));
+	return vec;
+}
+
+cv::Mat Image::convert_to_mat() const
+{
+	return cv::Mat(height, width, CV_8UC1, const_cast<uint8_t *>(samples.data()));
 }
 
 /**
- * @brief Displays the image using OpenCV.
+ * @brief Displays the image using OpenCV, until user presses key on OpenCV window.
 **/
-void Image::show() const
+void Image::show(const std::string_view image_name) const
 {
-	cv::Mat cv_image(height, width, CV_8UC1, const_cast<std::byte*>(data.data()));
-	cv::imshow("image", cv_image);
+	cv::Mat cv_image = this->convert_to_mat();
+	cv::imshow(image_name.data(), cv_image);
+}
+
+Coordinate::Cartesian Image::index_to_coordinate(const int32_t index) const
+{
+	return Coordinate::Cartesian(index / width, index % width);
 }

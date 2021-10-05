@@ -123,7 +123,7 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\Repositories\line-classification;C:\Repositories\line-classification\inc;C:\Repositories\line-classification\src;C:\opencv\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
@@ -151,11 +151,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\line-classification.cpp" />
+    <ClCompile Include="line-classifier.cpp" />
+    <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\structs.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\structs.h" />
+    <ClInclude Include="line-classifier.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\Capture.JPG" />
