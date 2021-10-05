@@ -16,6 +16,7 @@ std::vector<Line> LineClassifier::detect_lines(const Image& image, const uint64_
 		show_hough_lines(hough_lines, image);
 	}
 	// To-Do: filter and return
+	get_intersections(hough_lines, image);
 	return std::vector<Line>();
 }
 
@@ -70,6 +71,49 @@ std::vector<Line> LineClassifier::get_hough_lines(const std::vector<std::vector<
 				hough_lines.push_back(Line(Coordinate::Polar(static_cast<double>(i), Degrees(static_cast<double>(j)))));
 
 	return hough_lines;
+}
+
+std::vector<Coordinate::Cartesian> LineClassifier::get_intersections(const std::vector<Line>& lines, const Image& image) {
+	cv::Mat cv_img = image.convert_to_mat();
+	cv::cvtColor(cv_img, cv_img, cv::COLOR_GRAY2BGR);
+	Line l(Coordinate::Polar());
+
+	//classify horz and vertical
+	for (const Line& line : lines) {
+		if (line.is_vertical()) {
+			Radians theta = deg_to_radians(180.0 - line.polar.theta);
+
+			if (std::sin(theta) == 0) {
+				cv::Point pt1(line.polar.r, line.polar.r);
+				cv::Point pt2(0, image.width);
+				cv::line(cv_img, pt1, pt2, cv::Scalar(0, 0, 255));
+			}
+			else {
+				cv::Point pt1(0, line.polar.r / std::sin(theta));
+				cv::Point pt2(image.width, (line.polar.r - image.width * std::cos(theta)) / std::sin(theta));
+				cv::line(cv_img, pt1, pt2, cv::Scalar(0, 0, 255));
+			}
+		}
+		else {
+			//draw
+			Radians theta = deg_to_radians(180.0 - line.polar.theta);
+
+			if (std::sin(theta) == 0) {
+				cv::Point pt1(line.polar.r, line.polar.r);
+				cv::Point pt2(0, image.width);
+				cv::line(cv_img, pt1, pt2, cv::Scalar(0, 255, 0));
+			}
+			else {
+				cv::Point pt1(0, line.polar.r / std::sin(theta));
+				cv::Point pt2(image.width, (line.polar.r - image.width * std::cos(theta)) / std::sin(theta));
+				cv::line(cv_img, pt1, pt2, cv::Scalar(0, 255, 0));
+			}
+		}
+	}
+
+	cv::imshow("classified lines", cv_img);
+	cv::waitKey();
+	return std::vector<Coordinate::Cartesian>();
 }
 
 void LineClassifier::show_hough_transform(const std::vector<std::vector<double>>& hough_transform) const {

@@ -3,7 +3,7 @@
 #include <cmath>
 #include <algorithm>
 
-Line::Line(const Coordinate::Polar &polar) : polar(polar) {}
+Line::Line(const Coordinate::Polar& polar) : polar(polar) {}
 
 Coordinate::Cartesian Line::polar_to_cartesian() const
 {
@@ -21,7 +21,7 @@ Image::Image(const std::string_view path, const uint32_t width, const uint32_t h
 {
 }
 
-Image::Image(const std::vector<uint8_t> &vec, const uint32_t width, const uint32_t height) : samples(vec), width(width), height(height)
+Image::Image(const std::vector<uint8_t>& vec, const uint32_t width, const uint32_t height) : samples(vec), width(width), height(height)
 {
 }
 
@@ -32,9 +32,9 @@ Image::Image(const std::vector<uint8_t> &vec, const uint32_t width, const uint32
 **/
 std::vector<uint8_t> Image::getImageBuffer(const std::string_view path, const uint32_t width, const uint32_t height)
 {
-	uint8_t *buffer = new uint8_t[width * height];
+	uint8_t* buffer = new uint8_t[width * height];
 
-	FILE *fp = fopen(path.data(), "rb");
+	FILE* fp = fopen(path.data(), "rb");
 	if (fp)
 	{
 		fread(buffer, width * height, 1, fp);
@@ -46,7 +46,7 @@ std::vector<uint8_t> Image::getImageBuffer(const std::string_view path, const ui
 
 cv::Mat Image::convert_to_mat() const
 {
-	return cv::Mat(height, width, CV_8UC1, const_cast<uint8_t *>(samples.data()));
+	return cv::Mat(height, width, CV_8UC1, const_cast<uint8_t*>(samples.data()));
 }
 
 /**

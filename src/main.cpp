@@ -48,20 +48,8 @@ int main()
 	Image img("res/image.raw", image_width, image_height);
 
 	binarize(img, 150);
-	noise_removal(img, 90);
-
-	cv::Mat base = img.convert_to_mat();
-	cv::Mat blurred;
-	cv::blur(base, blurred, cv::Size(10, 10));
-	cv::Mat edges;
-	cv::Canny(blurred, edges, 100, 200);
-	//cv::imwrite("processed.tif", edges);
-
-	cv::Mat flat = edges.reshape(1, edges.total() * edges.channels());
-	std::vector<uint8_t> vec = edges.isContinuous() ? flat : flat.clone();
-	Image processed_img(vec, image_width, image_height);
 
 	LineClassifier classifier;
-	classifier.detect_lines(processed_img, 100, 100, true);
+	classifier.detect_lines(img, 100, 100, true);
 	cv::waitKey();
 }

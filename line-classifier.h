@@ -2,6 +2,7 @@
 
 #include <structs.h>
 #include <numbers>
+#include <unordered_map>
 
 class LineClassifier
 {
@@ -21,6 +22,7 @@ private:
 	std::vector<Line> get_hough_lines(const std::vector<std::vector<double>>& hough_transform, const double threshold) const;
 	double find_max_element(const std::vector<std::vector<double>>& two_dim_vec) const;
 
+	std::vector<Coordinate::Cartesian> get_intersections(const std::vector<Line>& lines, const Image& image);
 	void show_hough_transform(const std::vector<std::vector<double>>& hough_transform) const;
 	void show_hough_lines(const std::vector<Line>& hough_lines, const Image& image) const;
 };
