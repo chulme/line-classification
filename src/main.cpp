@@ -50,6 +50,6 @@ int main()
 	binarize(img, 150);
 
 	LineClassifier classifier;
-	classifier.detect_lines(img, 100, 100, true);
+	classifier.detect_lines(img, 200, 100, true);
 	cv::waitKey();
 }

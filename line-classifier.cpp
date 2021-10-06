@@ -16,7 +16,9 @@ std::vector<Line> LineClassifier::detect_lines(const Image& image, const uint64_
 		show_hough_lines(hough_lines, image);
 	}
 	// To-Do: filter and return
+	prune_lines(hough_lines);
 	get_intersections(hough_lines, image);
+
 	return std::vector<Line>();
 }
 
@@ -73,47 +75,82 @@ std::vector<Line> LineClassifier::get_hough_lines(const std::vector<std::vector<
 	return hough_lines;
 }
 
+void LineClassifier::prune_lines(std::vector<Line>& lines)
+{
+	for (auto it1 = lines.begin(); it1 != lines.end(); ++it1)
+	{
+		for (auto it2 = std::next(it1); it2 != lines.end(); )
+		{
+			if (is_similar(*it1, *it2))
+			{
+				*it1 = Line(Coordinate::Polar((it1->polar.r + it2->polar.r) / 2.0, (it1->polar.theta + it2->polar.theta) / 2.0));
+				it2 = lines.erase(it2);
+			}
+			else { ++it2; }
+		}
+	}
+}
+
+bool LineClassifier::is_similar(const Line& line_a, const Line& line_b) {
+	bool similarAngle = (angle_difference_d(line_a.polar.theta, line_b.polar.theta) < 30);
+	bool similarR = (std::abs(line_a.polar.r - line_b.polar.r) < 15);
+	return (similarAngle && similarR);
+}
+
 std::vector<Coordinate::Cartesian> LineClassifier::get_intersections(const std::vector<Line>& lines, const Image& image) {
 	cv::Mat cv_img = image.convert_to_mat();
 	cv::cvtColor(cv_img, cv_img, cv::COLOR_GRAY2BGR);
 	Line l(Coordinate::Polar());
 
 	//classify horz and vertical
-	for (const Line& line : lines) {
+	for (const Line& line : lines)
+	{
+		std::array<Coordinate::Cartesian, 2> coord_pair = line.to_line_segment();
 		if (line.is_vertical()) {
-			Radians theta = deg_to_radians(180.0 - line.polar.theta);
-
-			if (std::sin(theta) == 0) {
-				cv::Point pt1(line.polar.r, line.polar.r);
-				cv::Point pt2(0, image.width);
-				cv::line(cv_img, pt1, pt2, cv::Scalar(0, 0, 255));
-			}
-			else {
-				cv::Point pt1(0, line.polar.r / std::sin(theta));
-				cv::Point pt2(image.width, (line.polar.r - image.width * std::cos(theta)) / std::sin(theta));
-				cv::line(cv_img, pt1, pt2, cv::Scalar(0, 0, 255));
-			}
+			cv::line(cv_img, cv::Point(coord_pair[0].x, coord_pair[0].y), cv::Point(coord_pair[1].x, coord_pair[1].y), cv::Scalar(0, 0, 255), 5);
 		}
 		else {
-			//draw
-			Radians theta = deg_to_radians(180.0 - line.polar.theta);
+			cv::line(cv_img, cv::Point(coord_pair[0].x, coord_pair[0].y), cv::Point(coord_pair[1].x, coord_pair[1].y), cv::Scalar(255, 0, 0), 5);
+		}
+	}
 
-			if (std::sin(theta) == 0) {
-				cv::Point pt1(line.polar.r, line.polar.r);
-				cv::Point pt2(0, image.width);
-				cv::line(cv_img, pt1, pt2, cv::Scalar(0, 255, 0));
-			}
-			else {
-				cv::Point pt1(0, line.polar.r / std::sin(theta));
-				cv::Point pt2(image.width, (line.polar.r - image.width * std::cos(theta)) / std::sin(theta));
-				cv::line(cv_img, pt1, pt2, cv::Scalar(0, 255, 0));
+	std::vector<Coordinate::Cartesian> coords;
+	for (size_t i = 0; i < lines.size(); i++) {
+		for (size_t j = 0; j < lines.size(); j++) {
+			if (i != j) {
+				coords.push_back(get_intersection(lines[i], lines[j]));
 			}
 		}
 	}
 
+	for (auto coord : coords) {
+		cv::drawMarker(cv_img, cv::Point(coord.x, coord.y), cv::Scalar(0, 255, 0), 0, 20, 8);
+	}
+
 	cv::imshow("classified lines", cv_img);
 	cv::waitKey();
-	return std::vector<Coordinate::Cartesian>();
+	return coords;
+}
+
+Coordinate::Cartesian LineClassifier::get_intersection(const Line& lineA, const Line& lineB)
+{
+	Radians thetaA = deg_to_radians(lineA.polar.theta);
+	Radians thetaB = deg_to_radians(lineB.polar.theta);
+
+	double ct1 = std::cos(thetaA);
+	double st1 = std::sin(thetaA);
+	double ct2 = std::cos(thetaB);
+	double st2 = std::sin(thetaB);
+	double d = ct1 * st2 - st1 * ct2;
+	if (d != 0) {
+		return {
+			static_cast<int64_t>(std::abs((st2 * lineA.polar.r - st1 * lineB.polar.r) / d)),
+			static_cast<int64_t>(std::abs((-ct2 * lineA.polar.r + ct1 * lineB.polar.r) / d))
+		};
+	}
+	else { //parallel
+		return { 0,0 };
+	}
 }
 
 void LineClassifier::show_hough_transform(const std::vector<std::vector<double>>& hough_transform) const {
@@ -130,18 +167,8 @@ void LineClassifier::show_hough_lines(const std::vector<Line>& hough_lines, cons
 
 	for (const Line& line : hough_lines)
 	{
-		Radians theta = deg_to_radians(180.0 - line.polar.theta);
-
-		if (std::sin(theta) == 0) {
-			cv::Point pt1(line.polar.r, line.polar.r);
-			cv::Point pt2(0, image.width);
-			cv::line(cv_img, pt1, pt2, cv::Scalar(0, 0, 255));
-		}
-		else {
-			cv::Point pt1(0, line.polar.r / std::sin(theta));
-			cv::Point pt2(image.width, (line.polar.r - image.width * std::cos(theta)) / std::sin(theta));
-			cv::line(cv_img, pt1, pt2, cv::Scalar(0, 0, 255));
-		}
+		std::array<Coordinate::Cartesian, 2> coord_pair = line.to_line_segment();
+		cv::line(cv_img, cv::Point(coord_pair[0].x, coord_pair[0].y), cv::Point(coord_pair[1].x, coord_pair[1].y), cv::Scalar(0, 0, 255));
 	}
 	cv::imshow("Hough Lines (pre-pruning)", cv_img);
 }

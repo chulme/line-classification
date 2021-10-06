@@ -22,7 +22,11 @@ private:
 	std::vector<Line> get_hough_lines(const std::vector<std::vector<double>>& hough_transform, const double threshold) const;
 	double find_max_element(const std::vector<std::vector<double>>& two_dim_vec) const;
 
+	void prune_lines(std::vector<Line>& lines);
+	bool is_similar(const Line& line_a, const Line& line_b);
+
 	std::vector<Coordinate::Cartesian> get_intersections(const std::vector<Line>& lines, const Image& image);
+	Coordinate::Cartesian get_intersection(const Line& lineA, const Line& lineB);
 	void show_hough_transform(const std::vector<std::vector<double>>& hough_transform) const;
 	void show_hough_lines(const std::vector<Line>& hough_lines, const Image& image) const;
 };
