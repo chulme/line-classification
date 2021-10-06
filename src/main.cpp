@@ -14,16 +14,16 @@ using namespace std;
 constexpr int32_t image_width = 1392, image_height = 550;
 constexpr std::string_view image_path = "res/image.raw";
 
-void binarize(Image& img, uint32_t threshold)
+void binarize(Image &img, uint32_t threshold)
 {
 	int i = 0;
-	for (uint8_t& sample : img.samples)
+	for (uint8_t &sample : img.samples)
 	{
 		sample = (sample > threshold) ? 255 : 0;
 	}
 }
 
-void noise_removal(Image& img, const int n)
+void noise_removal(Image &img, const int n)
 {
 	int i, key, j;
 	for (i = 1; i < n; i++)
