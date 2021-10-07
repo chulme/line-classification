@@ -20,7 +20,7 @@
     <ClCompile Include="src\structs.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="inc\line-classifier.cpp">
+    <ClCompile Include="src\line-classifier.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\hough.cpp">

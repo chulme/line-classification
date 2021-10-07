@@ -3,8 +3,12 @@
 #include <cmath>
 #include <algorithm>
 
-Line::Line(const Coordinate::Polar& polar) : polar(polar) {}
+Line::Line(const Coordinate::Polar &polar) : polar(polar) {}
 
+/**
+ * @brief Converts a line to a line segment, containing start-end points.
+ * @return Converted line segment.
+ */
 const LineSegment Line::to_line_segment() const
 {
 	static constexpr int64_t lineVal = 5000; //hard coded value to scale line, 5000 long so effectively covers most images.
@@ -14,19 +18,13 @@ const LineSegment Line::to_line_segment() const
 
 	if (std::sin(theta) == 0)
 	{
-		origin = { static_cast<int64_t>(polar.r), static_cast<int64_t>(polar.r) };
-		destination = { 0, lineVal };
+		origin = {static_cast<int64_t>(polar.r), static_cast<int64_t>(polar.r)};
+		destination = {0, lineVal};
 	}
 	else
 	{
-		origin = { 0, static_cast<int64_t>(polar.r / std::sin(theta)) };
-		destination = { lineVal, static_cast<int64_t>((polar.r - lineVal * std::cos(theta)) / std::sin(theta)) };
+		origin = {0, static_cast<int64_t>(polar.r / std::sin(theta))};
+		destination = {lineVal, static_cast<int64_t>((polar.r - lineVal * std::cos(theta)) / std::sin(theta))};
 	}
-	return { LineClasses::UNKNOWN, origin, destination };
+	return {LineClasses::UNKNOWN, origin, destination};
 }
-
-Coordinate::Cartesian Line::polar_to_cartesian() const
-{
-	return Coordinate::Cartesian(polar.r * std::cos(polar.theta), polar.r * std::sin(polar.theta));
-}
-

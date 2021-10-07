@@ -8,40 +8,22 @@
 typedef double Degrees;
 typedef double Radians;
 
-/**
- * @brief Converts degrees to radians.
- */
 inline constexpr Radians deg_to_radians(const Degrees &degrees)
 {
 	return degrees * (std::numbers::pi / 180.0);
 }
 
-/**
- * @brief Converts radians to degrees.
- */
 inline constexpr Degrees rad_to_degrees(const Radians &radians)
 {
 	return radians * 180.0 / std::numbers::pi;
 }
 
-/**
- * @brief Calculates the smallest angle between 2 degree angles
- * @param[in] a - First angle to calculate difference
- * @param[in] b - Second radian to calculate difference
- * @return Angle difference, in radians.
- */
 inline Degrees angle_difference_d(const Degrees &a, const Degrees &b)
 {
 	double diff = fmod((b - a + 180), 360.0) - 180;
 	return (180 - std::abs(diff) < diff) ? std::abs(180 - std::abs(diff)) : diff;
 }
 
-/**
- * @brief Calculates the smallest angle between 2 radian angles.
- * @param[in] a - First angle to calculate difference.
- * @param[in] b - Second angle to calculate difference.
- * @return Angle difference, in radians.
- */
 inline Radians angle_difference_r(const Radians &a, const Radians &b)
 {
 	return deg_to_radians(angle_difference_d(rad_to_degrees(a), rad_to_degrees(b)));
@@ -49,9 +31,6 @@ inline Radians angle_difference_r(const Radians &a, const Radians &b)
 
 namespace Coordinate
 {
-	/**
-	 * @brief Cartesian x-y coordinate
-	 */
 	struct Cartesian
 	{
 		int64_t x, y;
@@ -89,7 +68,7 @@ namespace Coordinate
 	};
 
 	/**
-	 * @brief Polar (r-theta) coordinate.
+	 * @brief Polar coordinate.
 	 */
 	struct Polar
 	{

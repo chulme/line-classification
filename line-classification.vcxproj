@@ -152,7 +152,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\image.cpp" />
-    <ClCompile Include="inc\line-classifier.cpp" />
+    <ClCompile Include="src\line-classifier.cpp" />
     <ClCompile Include="src\hough.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\structs.cpp" />

@@ -31,12 +31,11 @@ public:
 	std::vector<Line> classify_lines(const Image& image, std::vector<Line> hough_lines, const bool debug = false);
 
 private:
-
 	static constexpr int8_t NUMBER_OF_HOUGH_INTERSECTIONS_FOR_HORZ_LINES = 5;
 	static constexpr int8_t NUMBER_OF_INTERSECTIONS_FOR_BASE_LINE = 5;
 	static constexpr int8_t NUMBER_OF_INTERSECTIONS_FOR_SERVICE_LINE = 3;
 
-	std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal> get_intersections(const std::vector<Line>& lines, const Image& image);
+	std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal> get_intersections(const std::vector<Line>& lines);
 	void remove_false_horz_line_intersections(std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal>& intersections, const Image& image);
 
 	std::vector<LineSegment> classify_horz_lines(std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal>& lines);
