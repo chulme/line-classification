@@ -29,10 +29,6 @@ inline Radians angle_difference_r(const Radians& a, const Radians& b)
 	return deg_to_radians(angle_difference_d(rad_to_degrees(a), rad_to_degrees(b)));
 }
 
-struct Colour
-{
-	int16_t r, g, b;
-};
 namespace Coordinate
 {
 	struct Cartesian
@@ -106,6 +102,7 @@ public:
 	bool does_intersect(const LineSegment& line_segment) const {
 		return origin.x <= line_segment.destination.x && destination.x >= origin.x && origin.y <= line_segment.destination.y && destination.y >= origin.y;
 	}
+
 	LineSegment operator=(const LineSegment& s)
 	{
 		return { line_class = s.line_class,origin = s.origin,destination = s.destination };
@@ -133,4 +130,3 @@ private:
 		return this->polar.theta < l.polar.theta;
 	}
 };
-
