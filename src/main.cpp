@@ -47,7 +47,19 @@ int main()
 {
 	Image img("res/image.raw", image_width, image_height);
 
+	/*
+	constexpr int horz_crop = 5;
+	cv::Mat mat = base.convert_to_mat();
+	cv::Mat cropped(mat, cv::Rect(horz_crop, 0, image_width - horz_crop, image_height));
+	std::vector<uchar> v(cropped.data, cropped.data + cropped.total() * cropped.channels());
+	//v.assign(cropped.data,cropped.data+cropped.total()*cropped.channels());
+	Image img(v,image_width,image_height);
+
+	//Image cropped()
+	cv::imshow("Original", cropped);
+	*/
 	binarize(img, 150);
+	cv::imshow("Binarised", img.convert_to_mat());
 
 	LineClassifier classifier;
 	classifier.detect_lines(img, 200, 100, true);

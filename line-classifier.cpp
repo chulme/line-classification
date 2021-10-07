@@ -7,7 +7,8 @@
 #include <fstream>
 #include <structs.h>
 
-std::vector<Line> LineClassifier::detect_lines(const Image& image, const uint64_t hough_threshold, const uint64_t line_threshold, const bool debug) {
+std::vector<Line> LineClassifier::detect_lines(const Image& image, const uint64_t hough_threshold, const uint64_t line_threshold, const bool debug)
+{
 	std::vector<std::vector<double>> hough_transform = create_hough_transform(image);
 	std::vector<Line> hough_lines = get_hough_lines(hough_transform, hough_threshold);
 
@@ -16,12 +17,13 @@ std::vector<Line> LineClassifier::detect_lines(const Image& image, const uint64_
 	std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal> intersections = get_intersections(hough_lines, image);
 	remove_false_intersections(intersections, image);
 
-	std::unordered_map < LineClasses, Line> classified_lines = classify_lines(intersections);
+	std::vector<LineSegment> classified_lines = classify_lines(intersections);
 
 	cv::Mat debug_image = image.convert_to_mat();
 	cv::cvtColor(debug_image, debug_image, cv::COLOR_GRAY2BGR);
 
-	if (debug) {
+	if (debug)
+	{
 		show_hough_transform(hough_transform);
 		show_hough_lines(hough_lines, image);
 
@@ -30,8 +32,13 @@ std::vector<Line> LineClassifier::detect_lines(const Image& image, const uint64_
 				cv::drawMarker(debug_image, cv::Point(intersection.x, intersection.y), cv::Scalar(0, 255, 0), 0, 20, 8);
 
 		cv::imshow("Classified", debug_image);
-		cv::waitKey();
 	}
+	std::vector<Coordinate::Cartesian> intersection_coords(intersections.size());
+	for (auto i : intersections)
+		intersection_coords.insert(intersection_coords.begin(), i.second.begin(), i.second.end());
+	show_classified_lines(classified_lines, image);
+	cv::waitKey();
+
 	return std::vector<Line>();
 }
 
@@ -93,25 +100,30 @@ void LineClassifier::prune_lines(std::vector<Line>& lines)
 	//average out lines
 	for (auto it1 = lines.begin(); it1 != lines.end(); ++it1)
 	{
-		for (auto it2 = std::next(it1); it2 != lines.end(); )
+		for (auto it2 = std::next(it1); it2 != lines.end();)
 		{
 			if (is_similar(*it1, *it2))
 			{
 				*it1 = Line(Coordinate::Polar((it1->polar.r + it2->polar.r) / 2.0, (it1->polar.theta + it2->polar.theta) / 2.0));
 				it2 = lines.erase(it2);
 			}
-			else { ++it2; }
+			else
+			{
+				++it2;
+			}
 		}
 	}
 }
 
-bool LineClassifier::is_similar(const Line& line_a, const Line& line_b) {
+bool LineClassifier::is_similar(const Line& line_a, const Line& line_b)
+{
 	bool similarAngle = (angle_difference_d(line_a.polar.theta, line_b.polar.theta) < 30);
 	bool similarR = (std::abs(line_a.polar.r - line_b.polar.r) < 15);
 	return (similarAngle && similarR);
 }
 
-std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal> LineClassifier::get_intersections(const std::vector<Line>& lines, const Image& image) {
+std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal> LineClassifier::get_intersections(const std::vector<Line>& lines, const Image& image)
+{
 	std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal> coords;
 
 	std::vector<Line> vertical_lines;
@@ -120,17 +132,19 @@ std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, con
 	//classify horz and vertical
 	for (const Line& line : lines)
 	{
-		std::array<Coordinate::Cartesian, 2> coord_pair = line.to_line_segment();
 		if (line.is_vertical())
 			vertical_lines.push_back(line);
 		else
 			horizontal_lines.push_back(line);
 	}
 
-	for (const Line& vert_line : horizontal_lines) {
+	for (const Line& vert_line : horizontal_lines)
+	{
 		std::vector<Coordinate::Cartesian> intersections_of_line;
-		for (const Line& horz_line : vertical_lines) {
+		for (const Line& horz_line : vertical_lines)
+		{
 			intersections_of_line.push_back(get_intersection(vert_line, horz_line));
+			coords.insert({ horz_line, intersections_of_line });
 		}
 		coords.insert({ vert_line, intersections_of_line });
 	}
@@ -148,28 +162,41 @@ Coordinate::Cartesian LineClassifier::get_intersection(const Line& lineA, const 
 	double st2 = std::sin(thetaB);
 	double d = ct1 * st2 - st1 * ct2;
 	return {
-			static_cast<int64_t>(std::abs((st2 * lineA.polar.r - st1 * lineB.polar.r) / d)),
-			static_cast<int64_t>(std::abs((-ct2 * lineA.polar.r + ct1 * lineB.polar.r) / d))
-	};
+		static_cast<int64_t>(std::abs((st2 * lineA.polar.r - st1 * lineB.polar.r) / d)),
+		static_cast<int64_t>(std::abs((-ct2 * lineA.polar.r + ct1 * lineB.polar.r) / d)) };
 }
 
-void LineClassifier::remove_false_intersections(std::unordered_map< Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal>& intersections, const Image& image) {
-	for (auto it = intersections.begin(); it != intersections.end(); it++) {
-		Coordinate::Cartesian avg_l = { (it->second[0] + it->second[1]) / 2 };
-		Coordinate::Cartesian avg_r = { (it->second[4] + it->second[3]) / 2 };
-		if (!image.does_block_contain_samples(image.coordinate_to_index(avg_l), 10, 50)) {
-			it->second.erase(it->second.begin());
-			it->second.erase(it->second.begin() + 1);
+void LineClassifier::remove_false_intersections(std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal>& intersections, const Image& image)
+{
+	for (auto it = intersections.begin(); it != intersections.end(); it++)
+	{
+		if (!it->first.is_vertical())
+		{
+			if (it->second.size() >= 5)
+			{
+				Coordinate::Cartesian avg_l = { (it->second[0] + it->second[1]) / 2 };
+				Coordinate::Cartesian avg_r = { (it->second[4] + it->second[3]) / 2 };
+				if (!image.does_block_contain_samples(image.coordinate_to_index(avg_l), 20, 50))
+				{
+					it->second.erase(it->second.begin());
+				}
+				if (!image.does_block_contain_samples(image.coordinate_to_index(avg_r), 20, 50))
+				{
+					it->second.pop_back();
+				}
+			}
 		}
-		if (!image.does_block_contain_samples(image.coordinate_to_index(avg_r), 10, 50)) {
-			it->second.pop_back();
+		else
+		{
 		}
 	}
 }
 
-std::unordered_map < LineClasses, Line> LineClassifier::classify_lines(const std::unordered_map< Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal>& intersections) {
-	std::unordered_map < LineClasses, Line> classified_lines;
-	for (auto& it : intersections) {
+std::vector<LineSegment> LineClassifier::classify_lines(const std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal>& intersections)
+{
+	std::vector<LineSegment> classified_lines;
+	for (auto& it : intersections)
+	{
 		//VERTICAL CLASSIFICATION
 
 		// Create average coordinate for a given line
@@ -178,18 +205,23 @@ std::unordered_map < LineClasses, Line> LineClassifier::classify_lines(const std
 			avg += c;
 		avg /= it.second.size();
 
-		if (it.second.size() == 5) {
-			classified_lines.insert({ LineClasses::BASE_LINE, it.first });
+		if (!it.first.is_vertical() && it.second.size() == 5)
+		{
+			LineSegment seg(LineClasses::BASE_LINE, it.second.front(), it.second.back());
+			classified_lines.push_back(seg);
 		}
-		if (it.second.size() == 2) {
-			classified_lines.insert({ LineClasses::SERVICE_LINE, it.first });
+		if (!it.first.is_vertical() && it.second.size() == 3)
+		{
+			LineSegment seg(LineClasses::SERVICE_LINE, it.second.front(), it.second.back());
+			classified_lines.push_back(seg);
 		}
 	}
 
 	return classified_lines;
 }
 
-void LineClassifier::show_hough_transform(const std::vector<std::vector<double>>& hough_transform) const {
+void LineClassifier::show_hough_transform(const std::vector<std::vector<double>>& hough_transform) const
+{
 	cv::Mat cv_image(hough_transform.front().size(), hough_transform.size(), CV_8UC3, cv::Scalar(0, 0, 0));
 	for (size_t i = 0; i < hough_transform.size(); i++)
 		for (size_t j = 0; j < hough_transform.front().size(); j++)
@@ -197,14 +229,52 @@ void LineClassifier::show_hough_transform(const std::vector<std::vector<double>>
 	cv::imshow("Hough Transform", cv_image);
 }
 
-void LineClassifier::show_hough_lines(const std::vector<Line>& hough_lines, const Image& image) const {
+void LineClassifier::show_hough_lines(const std::vector<Line>& hough_lines, const Image& image) const
+{
 	cv::Mat cv_img = image.convert_to_mat();
 	cv::cvtColor(cv_img, cv_img, cv::COLOR_GRAY2BGR);
 
 	for (const Line& line : hough_lines)
 	{
-		std::array<Coordinate::Cartesian, 2> coord_pair = line.to_line_segment();
-		cv::line(cv_img, cv::Point(coord_pair[0].x, coord_pair[0].y), cv::Point(coord_pair[1].x, coord_pair[1].y), cv::Scalar(0, 0, 255), 5);
+		LineSegment line_seg = line.to_line_segment();
+		cv::line(cv_img, cv::Point(line_seg.origin.x, line_seg.origin.y), cv::Point(line_seg.destination.x, line_seg.destination.y), cv::Scalar(0, 0, 255), 5);
 	}
 	cv::imshow("Hough Lines", cv_img);
 }
+
+void LineClassifier::show_classified_lines(const std::vector<LineSegment>& lines, const Image& image) const
+{
+	cv::Mat cv = image.convert_to_mat();
+	cv::cvtColor(cv, cv, cv::COLOR_GRAY2BGR);
+	constexpr int8_t text_offset = -10;
+	for (const LineSegment& line : lines)
+	{
+		cv::drawMarker(cv, cv::Point(line.origin.x, line.origin.y), cv::Scalar(0, 255, 0), 0, 20, 8);
+		cv::drawMarker(cv, cv::Point(line.destination.x, line.destination.y), cv::Scalar(0, 255, 0), 0, 20, 8);
+
+		cv::line(cv, cv::Point(line.origin.x, line.origin.y), cv::Point(line.destination.x, line.destination.y), cv::Scalar(0, 255, 0), 5);
+		Coordinate::Cartesian average_coord = (line.origin + line.destination) / 2;
+		switch (line.line_class)
+		{
+		case LineClasses::BASE_LINE:
+			cv::putText(cv, "Base Line", cv::Point(average_coord.x, average_coord.y + text_offset), 0, 1.0, cv::Scalar(255, 255, 255), 2);
+			break;
+		case LineClasses::SERVICE_LINE:
+			cv::putText(cv, "Service Line", cv::Point(average_coord.x, average_coord.y + text_offset), 0, 1.0, cv::Scalar(255, 255, 255), 2);
+			break;
+		case LineClasses::CENTRE_SERVICE_LINE:
+			cv::putText(cv, "Service Line", cv::Point(average_coord.x, average_coord.y + text_offset), 0, 1.0, cv::Scalar(255, 255, 255), 2);
+			break;
+		case LineClasses::DOUBLES_SIDELINE:
+			cv::putText(cv, "Service Line", cv::Point(average_coord.x + text_offset, average_coord.y), 0, 1.0, cv::Scalar(255, 255, 255), 2);
+			break;
+		case LineClasses::SINGLES_SIDELINE:
+			cv::putText(cv, "Singles Sideline", cv::Point(average_coord.x + text_offset, average_coord.y), 0, 1.0, cv::Scalar(255, 255, 255), 2);
+			break;
+
+		default:
+			break;
+		}
+	}
+	cv::imshow("Classified Lines", cv);
+};

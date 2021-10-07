@@ -3,26 +3,26 @@
 #include <cmath>
 #include <algorithm>
 
-Line::Line(const Coordinate::Polar &polar) : polar(polar) {}
+Line::Line(const Coordinate::Polar& polar) : polar(polar) {}
 
-std::array<Coordinate::Cartesian, 2> Line::to_line_segment() const
+const LineSegment Line::to_line_segment() const
 {
 	static constexpr int64_t lineVal = 5000; //hard coded value to scale line, 5000 long so effectively covers most images.
 	Radians theta = deg_to_radians(180.0 - polar.theta);
 
-	std::array<Coordinate::Cartesian, 2> coord_pair;
+	Coordinate::Cartesian origin, destination;
 
 	if (std::sin(theta) == 0)
 	{
-		coord_pair[0] = {static_cast<int64_t>(polar.r), static_cast<int64_t>(polar.r)};
-		coord_pair[1] = {0, lineVal};
+		origin = { static_cast<int64_t>(polar.r), static_cast<int64_t>(polar.r) };
+		destination = { 0, lineVal };
 	}
 	else
 	{
-		coord_pair[0] = {0, static_cast<int64_t>(polar.r / std::sin(theta))};
-		coord_pair[1] = {lineVal, static_cast<int64_t>((polar.r - lineVal * std::cos(theta)) / std::sin(theta))};
+		origin = { 0, static_cast<int64_t>(polar.r / std::sin(theta)) };
+		destination = { lineVal, static_cast<int64_t>((polar.r - lineVal * std::cos(theta)) / std::sin(theta)) };
 	}
-	return coord_pair;
+	return { LineClasses::UNKNOWN, origin, destination };
 }
 
 Coordinate::Cartesian Line::polar_to_cartesian() const
@@ -41,7 +41,7 @@ Image::Image(const std::string_view path, const uint32_t width, const uint32_t h
 {
 }
 
-Image::Image(const std::vector<uint8_t> &vec, const uint32_t width, const uint32_t height) : samples(vec), width(width), height(height)
+Image::Image(const std::vector<uint8_t>& vec, const uint32_t width, const uint32_t height) : samples(vec), width(width), height(height)
 {
 }
 
@@ -52,9 +52,9 @@ Image::Image(const std::vector<uint8_t> &vec, const uint32_t width, const uint32
 **/
 std::vector<uint8_t> Image::getImageBuffer(const std::string_view path, const uint32_t width, const uint32_t height)
 {
-	uint8_t *buffer = new uint8_t[width * height];
+	uint8_t* buffer = new uint8_t[width * height];
 
-	FILE *fp = fopen(path.data(), "rb");
+	FILE* fp = fopen(path.data(), "rb");
 	if (fp)
 	{
 		fread(buffer, width * height, 1, fp);
@@ -66,7 +66,7 @@ std::vector<uint8_t> Image::getImageBuffer(const std::string_view path, const ui
 
 cv::Mat Image::convert_to_mat() const
 {
-	return cv::Mat(height, width, CV_8UC1, const_cast<uint8_t *>(samples.data()));
+	return cv::Mat(height, width, CV_8UC1, const_cast<uint8_t*>(samples.data()));
 }
 
 /**
