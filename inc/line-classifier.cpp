@@ -9,25 +9,25 @@
 
 std::vector<Line> LineClassifier::classify_lines(const Image& image, std::vector<Line> hough_lines, const bool debug)
 {
-	std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal> intersections = get_intersections(hough_lines, image);
-	remove_false_horz_line_intersections(intersections, image);
+	auto line_intersections_map = get_intersections(hough_lines, image);
+	remove_false_horz_line_intersections(line_intersections_map, image);
 
-	std::vector<LineSegment> classified_lines = classify_horz_lines(intersections);
-	classified_lines = classify_vert_lines(intersections, classified_lines);
+	std::vector<LineSegment> classified_lines = classify_horz_lines(line_intersections_map);
+	classified_lines = classify_vert_lines(line_intersections_map, classified_lines);
 
 	cv::Mat debug_image = image.convert_to_mat();
 	cv::cvtColor(debug_image, debug_image, cv::COLOR_GRAY2BGR);
 
 	if (debug)
 	{
-		for (auto& it : intersections)
+		for (auto& it : line_intersections_map)
 			for (auto intersection : it.second)
 				cv::drawMarker(debug_image, cv::Point(intersection.x, intersection.y), cv::Scalar(0, 255, 0), 0, 20, 8);
 
 		cv::imshow("Classified", debug_image);
 	}
-	std::vector<Coordinate::Cartesian> intersection_coords(intersections.size());
-	for (auto i : intersections)
+	std::vector<Coordinate::Cartesian> intersection_coords(line_intersections_map.size());
+	for (auto i : line_intersections_map)
 		intersection_coords.insert(intersection_coords.begin(), i.second.begin(), i.second.end());
 	show_classified_lines(classified_lines, image);
 	cv::waitKey();
@@ -149,18 +149,6 @@ std::vector<LineSegment> LineClassifier::classify_horz_lines(const std::unordere
 std::vector<LineSegment> LineClassifier::classify_vert_lines(const std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal>& intersections, const std::vector<LineSegment>& horz_lines) {
 	std::vector<LineSegment> classified_lines = horz_lines;
 
-	/*
-	LineSegment inner_base_line;
-	for (const auto& it : intersections) {
-		if (!it.first.is_vertical()) {
-			if (it.second.size() == 5)
-			{
-				LineSegment seg(LineClasses::BASE_LINE, it.second.front(), it.second.back());
-				classified_lines.push_back(seg);
-			}
-		}
-	}
-	*/
 	LineSegment service_line = get_target_line(horz_lines, LineClasses::SERVICE_LINE);
 	LineSegment service_line_half = get_target_line(horz_lines, LineClasses::SERVICE_LINE_HALF);
 	LineSegment base_line_half = get_target_line(horz_lines, LineClasses::INNER_BASE_HALF_LINE);
@@ -212,28 +200,6 @@ LineSegment LineClassifier::get_target_line(const std::vector<LineSegment>& line
 		if (line.line_class == target_class)
 			return line;
 	return LineSegment({ 0,0 }, { 0,0 });
-}
-
-void LineClassifier::show_hough_transform(const std::vector<std::vector<double>>& hough_transform) const
-{
-	cv::Mat cv_image(hough_transform.front().size(), hough_transform.size(), CV_8UC3, cv::Scalar(0, 0, 0));
-	for (size_t i = 0; i < hough_transform.size(); i++)
-		for (size_t j = 0; j < hough_transform.front().size(); j++)
-			cv::drawMarker(cv_image, cv::Point(i, j), cv::Scalar(0, 0, hough_transform[i][j] * 3), 4, 1, 1);
-	cv::imshow("Hough Transform", cv_image);
-}
-
-void LineClassifier::show_hough_lines(const std::vector<Line>& hough_lines, const Image& image) const
-{
-	cv::Mat cv_img = image.convert_to_mat();
-	cv::cvtColor(cv_img, cv_img, cv::COLOR_GRAY2BGR);
-
-	for (const Line& line : hough_lines)
-	{
-		LineSegment line_seg = line.to_line_segment();
-		cv::line(cv_img, cv::Point(line_seg.origin.x, line_seg.origin.y), cv::Point(line_seg.destination.x, line_seg.destination.y), cv::Scalar(0, 0, 255), 5);
-	}
-	cv::imshow("Hough Lines", cv_img);
 }
 
 void LineClassifier::show_classified_lines(const std::vector<LineSegment>& lines, const Image& image) const

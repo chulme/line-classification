@@ -4,6 +4,7 @@
 #include <numbers>
 #include <unordered_map>
 #include <utility>
+
 struct LineSegment;
 class Line;
 

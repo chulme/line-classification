@@ -74,14 +74,12 @@ int main()
 	//Image cropped()
 	cv::imshow("Original", cropped);
 	*/
-	cv::imshow("Org", img.convert_to_mat());
 
 	binarize(img, 150);
-	cv::imshow("Binarised", img.convert_to_mat());
 
 	Hough hough_transformer;
 	auto hough_transform = hough_transformer.create_hough_transform(img);
-	auto hough_lines = hough_transformer.get_hough_lines(hough_transform, 200);
+	auto hough_lines = hough_transformer.get_hough_lines(img, hough_transform, 200);
 
 	LineClassifier classifier;
 	classifier.classify_lines(img, hough_lines, true);

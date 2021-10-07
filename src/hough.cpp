@@ -1,6 +1,6 @@
 #include <hough.h>
 
-std::vector<std::vector<double>> Hough::create_hough_transform(const Image& img)
+std::vector<std::vector<double>> Hough::create_hough_transform(const Image& img, const bool debug)
 {
 	std::vector<Coordinate::Cartesian> coordinates = find_valid_sample_indices(img);
 
@@ -15,18 +15,25 @@ std::vector<std::vector<double>> Hough::create_hough_transform(const Image& img)
 		for (size_t j = 0; j < angles.size(); j++)
 			if (r[i][j] >= 0.0f)
 				hough_transform[r[i][j]][j]++;
+	if (debug)
+		show_hough_transform(hough_transform);
 
 	return hough_transform;
 }
 
-std::vector<Line> Hough::get_hough_lines(const std::vector<std::vector<double>>& hough_transform, const double threshold) const
+std::vector<Line> Hough::get_hough_lines(const Image& img, const std::vector<std::vector<double>>& hough_transform, const double threshold, const bool debug) const
 {
 	std::vector<Line> hough_lines;
 	for (size_t i = 0; i < hough_transform.size(); i++)
 		for (size_t j = 0; j < hough_transform.front().size(); j++)
 			if (hough_transform[i][j] > threshold)
 				hough_lines.push_back(Line(Coordinate::Polar(static_cast<double>(i), Degrees(static_cast<double>(j)))));
+
 	prune_lines(hough_lines);
+
+	if (debug)
+		show_hough_lines(hough_lines, img);
+
 	return hough_lines;
 }
 
@@ -78,4 +85,26 @@ bool Hough::is_similar(const Line& line_a, const Line& line_b) const
 	bool similarAngle = (angle_difference_d(line_a.polar.theta, line_b.polar.theta) < 30);
 	bool similarR = (std::abs(line_a.polar.r - line_b.polar.r) < 15);
 	return (similarAngle && similarR);
+}
+
+void Hough::show_hough_transform(const std::vector<std::vector<double>>& hough_transform) const
+{
+	cv::Mat cv_image(hough_transform.front().size(), hough_transform.size(), CV_8UC3, cv::Scalar(0, 0, 0));
+	for (size_t i = 0; i < hough_transform.size(); i++)
+		for (size_t j = 0; j < hough_transform.front().size(); j++)
+			cv::drawMarker(cv_image, cv::Point(i, j), cv::Scalar(0, 0, hough_transform[i][j] * 3), 4, 1, 1);
+	cv::imshow("Hough Transform", cv_image);
+}
+
+void Hough::show_hough_lines(const std::vector<Line>& hough_lines, const Image& image) const
+{
+	cv::Mat cv_img = image.convert_to_mat();
+	cv::cvtColor(cv_img, cv_img, cv::COLOR_GRAY2BGR);
+
+	for (const Line& line : hough_lines)
+	{
+		LineSegment line_seg = line.to_line_segment();
+		cv::line(cv_img, cv::Point(line_seg.origin.x, line_seg.origin.y), cv::Point(line_seg.destination.x, line_seg.destination.y), cv::Scalar(0, 0, 255), 5);
+	}
+	cv::imshow("Hough Lines", cv_img);
 }
