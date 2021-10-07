@@ -46,10 +46,14 @@ private:
 	bool is_similar(const Line& line_a, const Line& line_b);
 
 	std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal> get_intersections(const std::vector<Line>& lines, const Image& image);
-	void remove_false_intersections(std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal>& intersections, const Image& image);
+	void remove_false_horz_line_intersections(std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal>& intersections, const Image& image);
 
-	std::vector<LineSegment> classify_lines(const std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal>& lines);
+	std::vector<LineSegment> classify_horz_lines(const std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal>& lines);
+	std::vector<LineSegment> classify_vert_lines(const std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal>& intersections, const std::vector<LineSegment>& horz_lines);
+
 	Coordinate::Cartesian get_intersection(const Line& lineA, const Line& lineB);
+	LineSegment get_target_line(const std::vector<LineSegment>& lines, const LineClasses target_class) const;
+
 	void show_hough_transform(const std::vector<std::vector<double>>& hough_transform) const;
 	void show_hough_lines(const std::vector<Line>& hough_lines, const Image& image) const;
 	void show_classified_lines(const std::vector<LineSegment>& lines, const Image& image) const;

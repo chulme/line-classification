@@ -15,9 +15,10 @@ std::vector<Line> LineClassifier::detect_lines(const Image& image, const uint64_
 	prune_lines(hough_lines);
 
 	std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal> intersections = get_intersections(hough_lines, image);
-	remove_false_intersections(intersections, image);
+	remove_false_horz_line_intersections(intersections, image);
 
-	std::vector<LineSegment> classified_lines = classify_lines(intersections);
+	std::vector<LineSegment> classified_lines = classify_horz_lines(intersections);
+	classified_lines = classify_vert_lines(intersections, classified_lines);
 
 	cv::Mat debug_image = image.convert_to_mat();
 	cv::cvtColor(debug_image, debug_image, cv::COLOR_GRAY2BGR);
@@ -138,13 +139,22 @@ std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, con
 			horizontal_lines.push_back(line);
 	}
 
-	for (const Line& vert_line : horizontal_lines)
+	for (const Line& horz_line : horizontal_lines)
 	{
 		std::vector<Coordinate::Cartesian> intersections_of_line;
-		for (const Line& horz_line : vertical_lines)
+		for (const Line& vert_line : vertical_lines)
+		{
+			intersections_of_line.push_back(get_intersection(horz_line, vert_line));
+		}
+		coords.insert({ horz_line, intersections_of_line });
+	}
+
+	for (const Line& vert_line : vertical_lines)
+	{
+		std::vector<Coordinate::Cartesian> intersections_of_line;
+		for (const Line& horz_line : horizontal_lines)
 		{
 			intersections_of_line.push_back(get_intersection(vert_line, horz_line));
-			coords.insert({ horz_line, intersections_of_line });
 		}
 		coords.insert({ vert_line, intersections_of_line });
 	}
@@ -166,7 +176,7 @@ Coordinate::Cartesian LineClassifier::get_intersection(const Line& lineA, const 
 		static_cast<int64_t>(std::abs((-ct2 * lineA.polar.r + ct1 * lineB.polar.r) / d)) };
 }
 
-void LineClassifier::remove_false_intersections(std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal>& intersections, const Image& image)
+void LineClassifier::remove_false_horz_line_intersections(std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal>& intersections, const Image& image)
 {
 	for (auto it = intersections.begin(); it != intersections.end(); it++)
 	{
@@ -186,38 +196,110 @@ void LineClassifier::remove_false_intersections(std::unordered_map<Line, std::ve
 				}
 			}
 		}
-		else
-		{
-		}
 	}
 }
 
-std::vector<LineSegment> LineClassifier::classify_lines(const std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal>& intersections)
+std::vector<LineSegment> LineClassifier::classify_horz_lines(const std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal>& intersections)
 {
 	std::vector<LineSegment> classified_lines;
 	for (auto& it : intersections)
 	{
-		//VERTICAL CLASSIFICATION
+		// Horizontal Line Classification
+		if (!it.first.is_vertical()) {
+			if (it.second.size() == 5)
+			{
+				LineSegment seg(LineClasses::INNER_BASE_LINE, it.second.begin()[1], it.second.end()[-2]);
+				classified_lines.push_back(seg);
 
-		// Create average coordinate for a given line
-		Coordinate::Cartesian avg;
-		for (auto& c : it.second)
-			avg += c;
-		avg /= it.second.size();
+				LineSegment seg2(LineClasses::BASE_LINE, it.second.front(), it.second.back());
+				classified_lines.push_back(seg2);
 
-		if (!it.first.is_vertical() && it.second.size() == 5)
-		{
-			LineSegment seg(LineClasses::BASE_LINE, it.second.front(), it.second.back());
-			classified_lines.push_back(seg);
+				LineSegment seg3(LineClasses::INNER_BASE_HALF_LINE, it.second.begin()[1], it.second.end()[-3]);
+				classified_lines.push_back(seg3);
+			}
+			else if (it.second.size() == 3)
+			{
+				LineSegment seg(LineClasses::SERVICE_LINE, it.second.front(), it.second.back());
+				classified_lines.push_back(seg);
+
+				LineSegment seg2(LineClasses::SERVICE_LINE_HALF, it.second.begin()[1], it.second.end()[-3]);
+				classified_lines.push_back(seg2);
+			}
 		}
-		if (!it.first.is_vertical() && it.second.size() == 3)
+		else // Vertical Line Classification
 		{
-			LineSegment seg(LineClasses::SERVICE_LINE, it.second.front(), it.second.back());
-			classified_lines.push_back(seg);
 		}
 	}
 
 	return classified_lines;
+}
+
+std::vector<LineSegment> LineClassifier::classify_vert_lines(const std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal>& intersections, const std::vector<LineSegment>& horz_lines) {
+	std::vector<LineSegment> classified_lines = horz_lines;
+
+	/*
+	LineSegment inner_base_line;
+	for (const auto& it : intersections) {
+		if (!it.first.is_vertical()) {
+			if (it.second.size() == 5)
+			{
+				LineSegment seg(LineClasses::BASE_LINE, it.second.front(), it.second.back());
+				classified_lines.push_back(seg);
+			}
+		}
+	}
+	*/
+	LineSegment service_line = get_target_line(horz_lines, LineClasses::SERVICE_LINE);
+	LineSegment service_line_half = get_target_line(horz_lines, LineClasses::SERVICE_LINE_HALF);
+	LineSegment base_line_half = get_target_line(horz_lines, LineClasses::INNER_BASE_HALF_LINE);
+	LineSegment base_line_outter = get_target_line(horz_lines, LineClasses::BASE_LINE);
+	LineSegment base_line = get_target_line(horz_lines, LineClasses::INNER_BASE_LINE);
+
+	for (auto& it : intersections) {
+		if (it.first.is_vertical()) {
+			for (Coordinate::Cartesian intersection : it.second) {
+				// 2 Singles Sideline
+				if (intersection == service_line.origin) {
+					double m = static_cast<double>(service_line.origin.y - base_line.origin.y) / static_cast<double>(service_line.origin.x - base_line.origin.x);
+					double c = static_cast<double>(base_line.origin.y) - static_cast<double>(m * base_line.origin.x);
+					double x = (0 - c) / m;
+					classified_lines.push_back({ LineClasses::SINGLES_SIDELINE, base_line.origin,Coordinate::Cartesian(std::abs(x),0) });
+				}
+				else if (intersection == service_line.destination) {
+					double m = static_cast<double>(service_line.destination.y - base_line.destination.y) / static_cast<double>(service_line.destination.x - base_line.destination.x);
+					double c = static_cast<double>(base_line.destination.y) - static_cast<double>(m * base_line.destination.x);
+					double x = (0 - c) / m;
+					classified_lines.push_back({ LineClasses::SINGLES_SIDELINE, base_line.destination,Coordinate::Cartesian(std::abs(x),0) });
+				} // Centre Service Line
+				else if (intersection == service_line_half.origin) {
+					double m = static_cast<double>(service_line_half.origin.y - base_line_half.destination.y) / static_cast<double>(service_line_half.origin.x - base_line_half.destination.x);
+					double c = static_cast<double>(base_line_half.destination.y) - static_cast<double>(m * base_line_half.destination.x);
+					double x = (0 - c) / m;
+					classified_lines.push_back({ LineClasses::CENTRE_SERVICE_LINE, service_line_half.origin,Coordinate::Cartesian(std::abs(x),0) });
+				} //Doubles Side Line
+				else if (intersection == base_line_outter.origin) {
+					double m = static_cast<double>(service_line.origin.y - base_line.origin.y) / static_cast<double>(service_line.origin.x - base_line.origin.x);
+					double c = static_cast<double>(base_line.origin.y) - static_cast<double>(m * base_line_outter.origin.x);
+					double x = (0 - c) / m;
+					classified_lines.push_back({ LineClasses::DOUBLES_SIDELINE, base_line_outter.origin,Coordinate::Cartesian(std::abs(x),0) });
+				}
+				else if (intersection == base_line_outter.destination) {
+					double m = static_cast<double>(service_line.destination.y - base_line.destination.y) / static_cast<double>(service_line.destination.x - base_line.destination.x);
+					double c = static_cast<double>(base_line_outter.destination.y) - static_cast<double>(m * base_line_outter.destination.x);
+					double x = (0 - c) / m;
+					classified_lines.push_back({ LineClasses::DOUBLES_SIDELINE, base_line_outter.destination,Coordinate::Cartesian(std::abs(x),0) });
+				}
+			}
+		}
+	}
+	return classified_lines;
+}
+
+LineSegment LineClassifier::get_target_line(const std::vector<LineSegment>& lines, const LineClasses target_class) const {
+	for (const LineSegment& line : lines)
+		if (line.line_class == target_class)
+			return line;
+	return LineSegment({ 0,0 }, { 0,0 });
 }
 
 void LineClassifier::show_hough_transform(const std::vector<std::vector<double>>& hough_transform) const
@@ -246,7 +328,9 @@ void LineClassifier::show_classified_lines(const std::vector<LineSegment>& lines
 {
 	cv::Mat cv = image.convert_to_mat();
 	cv::cvtColor(cv, cv, cv::COLOR_GRAY2BGR);
-	constexpr int8_t text_offset = -10;
+	constexpr int8_t text_line_offset = -10;
+	constexpr int8_t text_new_line_offset = -10;
+
 	for (const LineSegment& line : lines)
 	{
 		cv::drawMarker(cv, cv::Point(line.origin.x, line.origin.y), cv::Scalar(0, 255, 0), 0, 20, 8);
@@ -256,20 +340,20 @@ void LineClassifier::show_classified_lines(const std::vector<LineSegment>& lines
 		Coordinate::Cartesian average_coord = (line.origin + line.destination) / 2;
 		switch (line.line_class)
 		{
-		case LineClasses::BASE_LINE:
-			cv::putText(cv, "Base Line", cv::Point(average_coord.x, average_coord.y + text_offset), 0, 1.0, cv::Scalar(255, 255, 255), 2);
+		case LineClasses::INNER_BASE_LINE:
+			cv::putText(cv, "Base Line", cv::Point(average_coord.x, average_coord.y + text_line_offset), 0, 1.0, cv::Scalar(255, 255, 255), 2);
 			break;
 		case LineClasses::SERVICE_LINE:
-			cv::putText(cv, "Service Line", cv::Point(average_coord.x, average_coord.y + text_offset), 0, 1.0, cv::Scalar(255, 255, 255), 2);
+			cv::putText(cv, "Service Line", cv::Point(average_coord.x, average_coord.y + text_line_offset), 0, 1.0, cv::Scalar(255, 255, 255), 2);
 			break;
 		case LineClasses::CENTRE_SERVICE_LINE:
-			cv::putText(cv, "Service Line", cv::Point(average_coord.x, average_coord.y + text_offset), 0, 1.0, cv::Scalar(255, 255, 255), 2);
+			cv::putText(cv, "Centre Service Line", cv::Point(average_coord.x, average_coord.y + text_line_offset), 0, 1.0, cv::Scalar(255, 255, 255), 2);
 			break;
 		case LineClasses::DOUBLES_SIDELINE:
-			cv::putText(cv, "Service Line", cv::Point(average_coord.x + text_offset, average_coord.y), 0, 1.0, cv::Scalar(255, 255, 255), 2);
+			cv::putText(cv, "Dbls", cv::Point(average_coord.x + text_line_offset, average_coord.y), 0, 1.0, cv::Scalar(255, 255, 255), 2);
 			break;
 		case LineClasses::SINGLES_SIDELINE:
-			cv::putText(cv, "Singles Sideline", cv::Point(average_coord.x + text_offset, average_coord.y), 0, 1.0, cv::Scalar(255, 255, 255), 2);
+			cv::putText(cv, "Sgls", cv::Point(average_coord.x + text_line_offset, average_coord.y), 0, 1.0, cv::Scalar(255, 255, 255), 2);
 			break;
 
 		default:

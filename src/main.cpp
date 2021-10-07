@@ -43,6 +43,24 @@ void noise_removal(Image &img, const int n)
 	}
 }
 
+/*
+	cv::Mat original = base.convert_to_mat();
+	cv::Mat reduced, repositioned(cv::Size(image_width, image_height), CV_8UC1, cv::Scalar(0));
+	cv::resize(original, reduced, cv::Size(image_width * scale_factor, image_height * scale_factor));
+	reduced.copyTo(repositioned(cv::Rect(150, 0, reduced.cols, reduced.rows)));
+	//Image cropped()
+	cv::imshow("Original", repositioned);
+
+	std::vector<uchar> v(repositioned.data, repositioned.data + repositioned.total() * repositioned.channels());
+	Image img(v, image_width, image_height);
+
+	binarize(img, 150);
+	cv::imshow("Binarised", img.convert_to_mat());
+
+	LineClassifier classifier;
+	classifier.detect_lines(img, 200, 100, true);
+	cv::waitKey();
+*/
 int main()
 {
 	Image img("res/image.raw", image_width, image_height);
@@ -58,6 +76,8 @@ int main()
 	//Image cropped()
 	cv::imshow("Original", cropped);
 	*/
+	cv::imshow("Org", img.convert_to_mat());
+
 	binarize(img, 150);
 	cv::imshow("Binarised", img.convert_to_mat());
 

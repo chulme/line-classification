@@ -59,12 +59,16 @@ namespace Coordinate
 			return { x / c.x, y / c.y };
 		}
 
-		friend Cartesian operator+(const Cartesian& c1, const Cartesian& c2) { return { c1.x + c2.x, c1.y + c2.y }; };
-
-		Cartesian operator=(const Cartesian& c)
+		Cartesian operator=(const Cartesian c)
 		{
 			return { x = c.x, y = c.y };
 		}
+		bool operator==(const Cartesian c)
+		{
+			return (x == c.x && y == c.y);
+		}
+
+		friend Cartesian operator+(const Cartesian& c1, const Cartesian& c2) { return { c1.x + c2.x, c1.y + c2.y }; };
 	};
 
 	struct Polar
@@ -77,7 +81,11 @@ enum class LineClasses
 {
 	UNKNOWN,
 	BASE_LINE,
+	INNER_BASE_LINE,
+	INNER_BASE_HALF_LINE,
 	SERVICE_LINE,
+	SERVICE_LINE_HALF,
+	SERVICE_LINE_DOUBLES,
 	CENTRE_SERVICE_LINE,
 	SINGLES_SIDELINE,
 	DOUBLES_SIDELINE,
@@ -87,12 +95,26 @@ struct LineSegment
 {
 public:
 	LineClasses line_class = LineClasses::UNKNOWN;
-	Coordinate::Cartesian origin;
-	Coordinate::Cartesian destination;
+	Coordinate::Cartesian origin = { 0,0 };
+	Coordinate::Cartesian destination = { 0,0 };
 
+	LineSegment();
 	LineSegment(const LineClasses& line_class, const Coordinate::Cartesian& origin, const Coordinate::Cartesian& destination) : line_class(line_class), origin(origin), destination(destination) {}
 	LineSegment(const LineClasses& line_class, const LineSegment& segment) : line_class(line_class), origin(segment.origin), destination(segment.destination) {}
 	LineSegment(const Coordinate::Cartesian& origin, const Coordinate::Cartesian& destination) : line_class(LineClasses::UNKNOWN), origin(origin), destination(destination) {}
+
+	bool does_intersect(const LineSegment& line_segment) const {
+		return origin.x <= line_segment.destination.x && destination.x >= origin.x && origin.y <= line_segment.destination.y && destination.y >= origin.y;
+	}
+	LineSegment operator=(const LineSegment& s)
+	{
+		return { line_class = s.line_class,origin = s.origin,destination = s.destination };
+	}
+
+	bool operator==(const LineSegment& s)
+	{
+		return (line_class == s.line_class && origin == s.origin && destination == s.destination);
+	}
 };
 
 class Line
