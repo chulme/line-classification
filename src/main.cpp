@@ -3,27 +3,25 @@
 #include <vector>
 
 #include <structs.h>
+#include <hough.h>
 #include "line-classifier.h"
 
 #include <opencv2/opencv.hpp>
-
-using namespace cv;
-using namespace std;
 
 // Provided Image Details
 constexpr int32_t image_width = 1392, image_height = 550;
 constexpr std::string_view image_path = "res/image.raw";
 
-void binarize(Image &img, uint32_t threshold)
+void binarize(Image& img, uint32_t threshold)
 {
 	int i = 0;
-	for (uint8_t &sample : img.samples)
+	for (uint8_t& sample : img.samples)
 	{
 		sample = (sample > threshold) ? 255 : 0;
 	}
 }
 
-void noise_removal(Image &img, const int n)
+void noise_removal(Image& img, const int n)
 {
 	int i, key, j;
 	for (i = 1; i < n; i++)
@@ -81,7 +79,11 @@ int main()
 	binarize(img, 150);
 	cv::imshow("Binarised", img.convert_to_mat());
 
+	Hough hough_transformer;
+	auto hough_transform = hough_transformer.create_hough_transform(img);
+	auto hough_lines = hough_transformer.get_hough_lines(hough_transform, 200);
+
 	LineClassifier classifier;
-	classifier.detect_lines(img, 200, 100, true);
+	classifier.classify_lines(img, hough_lines, true);
 	cv::waitKey();
 }

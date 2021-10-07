@@ -151,11 +151,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="line-classifier.cpp" />
+    <ClCompile Include="inc\line-classifier.cpp" />
+    <ClCompile Include="src\hough.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\structs.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="inc\hough.h" />
     <ClInclude Include="inc\structs.h" />
     <ClInclude Include="line-classifier.h" />
   </ItemGroup>

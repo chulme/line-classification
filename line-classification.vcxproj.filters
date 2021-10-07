@@ -20,7 +20,10 @@
     <ClCompile Include="src\structs.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="line-classifier.cpp">
+    <ClCompile Include="inc\line-classifier.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\hough.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
@@ -29,6 +32,9 @@
       <Filter>inc</Filter>
     </ClInclude>
     <ClInclude Include="line-classifier.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\hough.h">
       <Filter>inc</Filter>
     </ClInclude>
   </ItemGroup>
