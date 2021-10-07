@@ -26,6 +26,9 @@
     <ClCompile Include="src\hough.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\image.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\structs.h">
@@ -35,6 +38,9 @@
       <Filter>inc</Filter>
     </ClInclude>
     <ClInclude Include="inc\hough.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\image.h">
       <Filter>inc</Filter>
     </ClInclude>
   </ItemGroup>

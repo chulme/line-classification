@@ -3,6 +3,7 @@
 #include <array>
 #include <vector>
 #include <structs.h>
+#include <image.h>
 
 class Hough
 {
