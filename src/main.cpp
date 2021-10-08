@@ -58,7 +58,7 @@ int main()
 	auto hough_lines = hough_transformer.get_hough_lines(img, hough_transform, 200, true);
 
 	LineClassifier classifier;
-	std::vector<ClassifiedLineSegment> lines = classifier.classify_lines(img, hough_lines,true);
+	std::vector<ClassifiedLineSegment> lines = classifier.classify_lines(img, hough_lines);
 
 	write_lines_to_csv(lines);
 	cv::waitKey();
