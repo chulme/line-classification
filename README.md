@@ -1,16 +1,20 @@
 # line-classification
 Project to extract and classify lines from an image of a sports court.
+![Hough Domain](/doc/results.png)
+
 
 ## Algorithm
 ### Hough Transform
 The Hough Transform is used to extract harsh lines from an image, where transforming an image in the traditional x-y domain, to the hough domain with theta-p axises, as shown below.
-...hough domain
+![Hough Domain](/doc/hough-domain.png)
 The following is the image's transform in the hough domain, after it has been binarised.
-...hough transform
-
+![Hough Transform](/doc/hough-transform.png)
 Note the 7 'bright' spots on the image, these indicate that there exists 7 lines in the original image!
+
 ## Hough Lines
 Lines are extracted from the hough transform, by finding hough domain samples greater than the threshold, and returning the associated theta-r values (the axis in which the hough domain is framed). From this, many lines are drawn per actual line. As increasing the threshold results in some lines no longer being detected correctly, pruning of these lines occurs, by comparing each line against each other, and if similar lines are found, an average is taken and 1 is removed, which results in 1 line per cluster. It is worth noting that This is not an ideal solution, as an outlier in a given cluster will impact the averaging. This could be improved by employing outlier rejection before averaging.
+
+![Hough Lines](/doc/hough-lines.png)
 
 ### Classification
 Classification at a high-level, is achived by the following steps:
@@ -24,9 +28,10 @@ The horizontal lines are classified first, as both the service and base line hav
 
 #### Horizontal Line Classification
 To classify the service and base lines, the actual number of intersections needs to be calculated, as hough lines will intersect with every perpendicular line. This encountered an unexpected challenge, whereby because of an outlier in the hough transform, the pruning average process causes the final line to be skewed off the original image's line. As a result, taking the centre coordinate between 2 sections and inspecting the pixel data is not sufficient, and instead a ROI must be scanned in order to compensate for inaccuracy.
-...Visualise ROI scan
 
-The steps for horizontal classification is visualised below:
+![Horizontal Classification](/doc/horz-process.png)
 
 #### Vertical Line Classification
-The steps for vertical line classification is visualised below:
+For vertical classification, now that there is knowledge of the horizontal lines and their associated intersections, they can be used to deduce the remaining vertical lines.
+
+![Vertical Classification](/doc/vert-process.png)
