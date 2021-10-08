@@ -17,9 +17,6 @@ struct container_hash
 	}
 };
 
-/**
- * @brief Basic equality for hash map.
- */
 struct container_equal
 {
 	bool operator()(Line const& c1, Line const& c2) const
@@ -28,9 +25,6 @@ struct container_equal
 	}
 };
 
-/**
- * @brief Class to classify lines of tennis court, using the number of intersections of each line.
- */
 class LineClassifier
 {
 public:
@@ -49,8 +43,8 @@ private:
 
 	Coordinate::Cartesian get_intersection(const Line& lineA, const Line& lineB);
 	ClassifiedLineSegment get_target_line(const std::vector<ClassifiedLineSegment>& lines, const LineClasses target_class) const;
-	Coordinate::Cartesian get_upper_image_intercept(const Coordinate::Cartesian p1, const Coordinate::Cartesian p2) const;
 
+	Coordinate::Cartesian get_upper_image_intercept(const Coordinate::Cartesian p1, const Coordinate::Cartesian p2) const;
 	void show_hough_transform(const std::vector<std::vector<double>>& hough_transform) const;
 	void show_hough_lines(const std::vector<Line>& hough_lines, const Image& image) const;
 	void show_classified_lines(const std::vector<ClassifiedLineSegment>& lines, const Image& image, const bool show_markers, const std::vector<Coordinate::Cartesian>& intersections = std::vector<Coordinate::Cartesian>()) const;

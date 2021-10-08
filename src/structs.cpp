@@ -1,7 +1,5 @@
 #include "structs.h"
 #include <opencv2/opencv.hpp>
-#include <cmath>
-#include <algorithm>
 
 Line::Line(const Coordinate::Polar& polar) : polar(polar) {}
 

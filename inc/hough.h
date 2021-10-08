@@ -5,6 +5,9 @@
 #include <structs.h>
 #include <image.h>
 
+/**
+ * @brief Class to calculate the hough transform and lines of a given image.
+ */
 class Hough
 {
 public:

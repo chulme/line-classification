@@ -1,9 +1,12 @@
+#pragma once
+
 #include <string_view>
 #include <vector>
-
 #include<structs.h>
 
-#pragma once
+/**
+ * @brief Basic helper class to manage images, and provides an interface to OpenCV for visualisation.
+ */
 class Image
 {
 public:

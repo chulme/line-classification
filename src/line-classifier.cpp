@@ -22,7 +22,7 @@ std::vector<Line> LineClassifier::classify_lines(const Image& image, std::vector
 {
 	auto line_intersections_map = get_intersections(hough_lines);
 	auto debug_intersections = line_intersections_map; //create copy for visualisation of all intersections, prior to pruning.
-	
+
 	remove_false_horz_line_intersections(line_intersections_map, image);
 
 	std::vector<ClassifiedLineSegment> classified_lines = classify_horz_lines(line_intersections_map);
@@ -36,14 +36,13 @@ std::vector<Line> LineClassifier::classify_lines(const Image& image, std::vector
 		std::vector<Coordinate::Cartesian> all_intersection_coords(debug_intersections.size());
 		for (auto i : debug_intersections)
 			all_intersection_coords.insert(all_intersection_coords.begin(), i.second.begin(), i.second.end());
-		show_classified_lines(classified_lines, image,true,all_intersection_coords);
+		show_classified_lines(classified_lines, image, true, all_intersection_coords);
 	}
 	else {
 		std::vector<Coordinate::Cartesian> pruned_intersection_coords(line_intersections_map.size());
 		for (auto i : line_intersections_map)
 			pruned_intersection_coords.insert(pruned_intersection_coords.begin(), i.second.begin(), i.second.end());
-		show_classified_lines(classified_lines, image,false);
-
+		show_classified_lines(classified_lines, image, false);
 	}
 	cv::waitKey();
 
@@ -288,7 +287,7 @@ Coordinate::Cartesian LineClassifier::get_upper_image_intercept(const Coordinate
  * @param[in] lines - Classified lines to draw.
  * @param[in] image - Image to underlay lines on top of.
  */
-void LineClassifier::show_classified_lines(const std::vector<ClassifiedLineSegment>& lines, const Image& image,const bool show_markers,const std::vector<Coordinate::Cartesian> &intersections) const
+void LineClassifier::show_classified_lines(const std::vector<ClassifiedLineSegment>& lines, const Image& image, const bool show_markers, const std::vector<Coordinate::Cartesian>& intersections) const
 {
 	cv::Mat cv = image.convert_to_mat();
 	cv::cvtColor(cv, cv, cv::COLOR_GRAY2BGR);
@@ -321,7 +320,7 @@ void LineClassifier::show_classified_lines(const std::vector<ClassifiedLineSegme
 		}
 	}
 
-	if(show_markers)
+	if (show_markers)
 		for (const Coordinate::Cartesian intersection : intersections)
 			cv::drawMarker(cv, cv::Point(intersection.x, intersection.y), cv::Scalar(0, 0, 255), 0, 20, 8);
 
