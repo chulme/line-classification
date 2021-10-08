@@ -123,29 +123,29 @@ enum class LineClasses
 /**
  * @brief Class representing line segment, containing start-end points and a classification.
  */
-struct LineSegment
+struct ClassifiedLineSegment
 {
 public:
 	LineClasses line_class = LineClasses::UNKNOWN;
 	Coordinate::Cartesian origin = {0, 0};
 	Coordinate::Cartesian destination = {0, 0};
 
-	LineSegment();
-	LineSegment(const LineClasses &line_class, const Coordinate::Cartesian &origin, const Coordinate::Cartesian &destination) : line_class(line_class), origin(origin), destination(destination) {}
-	LineSegment(const LineClasses &line_class, const LineSegment &segment) : line_class(line_class), origin(segment.origin), destination(segment.destination) {}
-	LineSegment(const Coordinate::Cartesian &origin, const Coordinate::Cartesian &destination) : line_class(LineClasses::UNKNOWN), origin(origin), destination(destination) {}
+	ClassifiedLineSegment();
+	ClassifiedLineSegment(const LineClasses &line_class, const Coordinate::Cartesian &origin, const Coordinate::Cartesian &destination) : line_class(line_class), origin(origin), destination(destination) {}
+	ClassifiedLineSegment(const LineClasses &line_class, const ClassifiedLineSegment &segment) : line_class(line_class), origin(segment.origin), destination(segment.destination) {}
+	ClassifiedLineSegment(const Coordinate::Cartesian &origin, const Coordinate::Cartesian &destination) : line_class(LineClasses::UNKNOWN), origin(origin), destination(destination) {}
 
-	bool does_intersect(const LineSegment &line_segment) const
+	bool does_intersect(const ClassifiedLineSegment &line_segment) const
 	{
 		return origin.x <= line_segment.destination.x && destination.x >= origin.x && origin.y <= line_segment.destination.y && destination.y >= origin.y;
 	}
 
-	LineSegment operator=(const LineSegment &s)
+	ClassifiedLineSegment operator=(const ClassifiedLineSegment &s)
 	{
 		return {line_class = s.line_class, origin = s.origin, destination = s.destination};
 	}
 
-	bool operator==(const LineSegment &s)
+	bool operator==(const ClassifiedLineSegment &s)
 	{
 		return (line_class == s.line_class && origin == s.origin && destination == s.destination);
 	}
@@ -161,7 +161,7 @@ public:
 	bool is_vertical() const { return !(polar.theta < 150 && polar.theta > 45); }
 	Line(const Coordinate::Polar &polar);
 
-	const LineSegment to_line_segment() const;
+	const ClassifiedLineSegment to_line_segment() const;
 
 private:
 	bool operator<(const Line &l)

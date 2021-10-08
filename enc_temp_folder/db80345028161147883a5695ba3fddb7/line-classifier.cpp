@@ -269,13 +269,6 @@ ClassifiedLineSegment LineClassifier::get_target_line(const std::vector<Classifi
 	return ClassifiedLineSegment({ 0, 0 }, { 0, 0 }); //return default line segment
 }
 
-/**
- * @brief Calculates the position of which a line drawn between 2 coordinates will pass through y=0, or otherwise the top of the image.
- * @details This is necessary as the image does not contain a clear end point for vertical lines.
- * @param[in] p1 - First point of the line.
- * @param[in] p2 - Second point of the line.
- * @return The coordinate at which y=0.
- */
 Coordinate::Cartesian LineClassifier::get_upper_image_intercept(const Coordinate::Cartesian p1, const Coordinate::Cartesian p2) const {
 	const double m = static_cast<double>(p2.y - p1.y) / static_cast<double>(p2.x - p1.x);
 	const double c = static_cast<double>(p1.y) - static_cast<double>(m * p1.x);
