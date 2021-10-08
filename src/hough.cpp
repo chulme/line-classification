@@ -6,7 +6,7 @@
  * @param[in] debug - Optional argument to enable visualisation of the transform.
  * @return Hough transform represented as 2D Vector.
  */
-std::vector<std::vector<double>> Hough::create_hough_transform(const Image& img, const bool debug)
+std::vector<std::vector<double>> Hough::create_hough_transform(const Image &img, const bool debug)
 {
 	std::vector<Coordinate::Cartesian> coordinates = find_valid_sample_indices(img);
 
@@ -35,7 +35,8 @@ std::vector<std::vector<double>> Hough::create_hough_transform(const Image& img,
  * @param[in] debug - Optional argument to enable visualisation of the transform.
  * @return Hough lines of an image, which is a representation of harsh lines in the image.
  */
-std::vector<Line> Hough::get_hough_lines(const Image& img, const std::vector<std::vector<double>>& hough_transform, const double threshold, const bool debug) const
+std::vector<Line> Hough::get_hough_lines(const Image &img, const std::vector<std::vector<double>> &hough_transform,
+										 const double threshold, const bool debug) const
 {
 	std::vector<Line> hough_lines;
 	for (size_t i = 0; i < hough_transform.size(); i++)
@@ -56,7 +57,7 @@ std::vector<Line> Hough::get_hough_lines(const Image& img, const std::vector<std
  * @param[in] img - Image to transform.
  * @return Cartesian coordinates of valid samples.
  */
-std::vector<Coordinate::Cartesian> Hough::find_valid_sample_indices(const Image& image)
+std::vector<Coordinate::Cartesian> Hough::find_valid_sample_indices(const Image &image)
 {
 	std::vector<Coordinate::Cartesian> valid_coordinates;
 	std::vector<std::vector<int>> v(image.height, std::vector<int>(image.width));
@@ -73,10 +74,10 @@ std::vector<Coordinate::Cartesian> Hough::find_valid_sample_indices(const Image&
  * @param[in] two_dim_vec - 2D Vector to find max element of.
  * @return Maximum element of the 2D vector.
  */
-double Hough::find_max_element(const std::vector<std::vector<double>>& two_dim_vec) const
+double Hough::find_max_element(const std::vector<std::vector<double>> &two_dim_vec) const
 {
 	double largest_value = 0.0;
-	for (const std::vector<double>& inner_vec : two_dim_vec)
+	for (const std::vector<double> &inner_vec : two_dim_vec)
 		for (const double element : inner_vec)
 			if (largest_value < element)
 				largest_value = element;
@@ -91,7 +92,7 @@ double Hough::find_max_element(const std::vector<std::vector<double>>& two_dim_v
  * outlier rejection before averaging.
  * @param[in, out] lines - The lines to prune
  */
-void Hough::prune_lines(std::vector<Line>& lines) const
+void Hough::prune_lines(std::vector<Line> &lines) const
 {
 	//average out lines
 	for (auto it1 = lines.begin(); it1 != lines.end(); ++it1)
@@ -120,7 +121,7 @@ void Hough::prune_lines(std::vector<Line>& lines) const
  * @param[in] line_a - Second line to compare
  * @return Flag indicating if they are similar (true if similar, false if not).
  */
-bool Hough::is_similar(const Line& line_a, const Line& line_b) const
+bool Hough::is_similar(const Line &line_a, const Line &line_b) const
 {
 	bool similarAngle = (angle_difference_d(line_a.polar.theta, line_b.polar.theta) < 30);
 	bool similarR = (std::abs(line_a.polar.r - line_b.polar.r) < 15);
@@ -132,7 +133,7 @@ bool Hough::is_similar(const Line& line_a, const Line& line_b) const
  * @note OpenCV's WaitKey function is required after in order to display.
  * @param[in] hough_transform - The hough transform to display
  */
-void Hough::show_hough_transform(const std::vector<std::vector<double>>& hough_transform) const
+void Hough::show_hough_transform(const std::vector<std::vector<double>> &hough_transform) const
 {
 	cv::Mat cv_image(hough_transform.front().size(), hough_transform.size(), CV_8UC3, cv::Scalar(0, 0, 0));
 	for (size_t i = 0; i < hough_transform.size(); i++)
@@ -147,12 +148,12 @@ void Hough::show_hough_transform(const std::vector<std::vector<double>>& hough_t
  * @param[in] hough_lines - The hough lines to display
  * @param[in] image - The image where lines will be drawn on top of.
  */
-void Hough::show_hough_lines(const std::vector<Line>& hough_lines, const Image& image) const
+void Hough::show_hough_lines(const std::vector<Line> &hough_lines, const Image &image) const
 {
 	cv::Mat cv_img = image.convert_to_mat();
 	cv::cvtColor(cv_img, cv_img, cv::COLOR_GRAY2BGR);
 
-	for (const Line& line : hough_lines)
+	for (const Line &line : hough_lines)
 	{
 		ClassifiedLineSegment line_seg = line.to_line_segment();
 		cv::line(cv_img, cv::Point(line_seg.origin.x, line_seg.origin.y), cv::Point(line_seg.destination.x, line_seg.destination.y), cv::Scalar(0, 0, 255), 5);

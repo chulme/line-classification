@@ -18,7 +18,7 @@
  * @param[in] debug - Optional argument to enable visualisation of preprocessed data.
  * @return Vector of line segments, which contain a classification.
  */
-std::vector<Line> LineClassifier::classify_lines(const Image& image, std::vector<Line> hough_lines, const bool debug)
+std::vector<Line> LineClassifier::classify_lines(const Image &image, std::vector<Line> hough_lines, const bool debug)
 {
 	auto line_intersections_map = get_intersections(hough_lines);
 	auto debug_intersections = line_intersections_map; //create copy for visualisation of all intersections, prior to pruning.
@@ -38,7 +38,8 @@ std::vector<Line> LineClassifier::classify_lines(const Image& image, std::vector
 			all_intersection_coords.insert(all_intersection_coords.begin(), i.second.begin(), i.second.end());
 		show_classified_lines(classified_lines, image, true, all_intersection_coords);
 	}
-	else {
+	else
+	{
 		std::vector<Coordinate::Cartesian> pruned_intersection_coords(line_intersections_map.size());
 		for (auto i : line_intersections_map)
 			pruned_intersection_coords.insert(pruned_intersection_coords.begin(), i.second.begin(), i.second.end());
@@ -55,7 +56,7 @@ std::vector<Line> LineClassifier::classify_lines(const Image& image, std::vector
  * @param[in] lines - Vector of lines to calculate intersections.
  * @return Map of lines to their associated intersections, represented as cartesian coordinates.
  */
-std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal> LineClassifier::get_intersections(const std::vector<Line>& lines)
+std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal> LineClassifier::get_intersections(const std::vector<Line> &lines)
 {
 	std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal> coords;
 
@@ -63,32 +64,32 @@ std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, con
 	std::vector<Line> horizontal_lines;
 
 	//Seperate horizontal and vertical lines
-	for (const Line& line : lines)
+	for (const Line &line : lines)
 		if (line.is_vertical())
 			vertical_lines.push_back(line);
 		else
 			horizontal_lines.push_back(line);
 
 	// Determine all intersections for all horizontal lines
-	for (const Line& horz_line : horizontal_lines)
+	for (const Line &horz_line : horizontal_lines)
 	{
 		std::vector<Coordinate::Cartesian> intersections_of_line;
-		for (const Line& vert_line : vertical_lines)
+		for (const Line &vert_line : vertical_lines)
 		{
 			intersections_of_line.push_back(get_intersection(horz_line, vert_line));
 		}
-		coords.insert({ horz_line, intersections_of_line });
+		coords.insert({horz_line, intersections_of_line});
 	}
 
 	// Determine all intersections for all vertical lines
-	for (const Line& vert_line : vertical_lines)
+	for (const Line &vert_line : vertical_lines)
 	{
 		std::vector<Coordinate::Cartesian> intersections_of_line;
-		for (const Line& horz_line : horizontal_lines)
+		for (const Line &horz_line : horizontal_lines)
 		{
 			intersections_of_line.push_back(get_intersection(vert_line, horz_line));
 		}
-		coords.insert({ vert_line, intersections_of_line });
+		coords.insert({vert_line, intersections_of_line});
 	}
 	return coords;
 }
@@ -99,7 +100,7 @@ std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, con
  * @param[in] lineB - Second line to find intersection for
  * @return Intersection coordinate
  */
-Coordinate::Cartesian LineClassifier::get_intersection(const Line& lineA, const Line& lineB)
+Coordinate::Cartesian LineClassifier::get_intersection(const Line &lineA, const Line &lineB)
 {
 	Radians thetaA = deg_to_radians(lineA.polar.theta);
 	Radians thetaB = deg_to_radians(lineB.polar.theta);
@@ -126,7 +127,9 @@ Coordinate::Cartesian LineClassifier::get_intersection(const Line& lineA, const 
  * @param[in] image - Base image used to determine if a given line continues or not at each intersection. If the line does not continue,
  * a false intersection has occured.
  */
-void LineClassifier::remove_false_horz_line_intersections(std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal>& intersections, const Image& image)
+void LineClassifier::remove_false_horz_line_intersections(std::unordered_map<Line, std::vector<Coordinate::Cartesian>,
+																			 container_hash, container_equal> &intersections,
+														  const Image &image)
 {
 	for (auto it = intersections.begin(); it != intersections.end(); it++)
 	{
@@ -156,11 +159,12 @@ void LineClassifier::remove_false_horz_line_intersections(std::unordered_map<Lin
  * (albeit not significantly) when classifiying vertical lines.
  * @return Vector of line segments, containing start-end points and a classification.
  */
-std::vector<ClassifiedLineSegment> LineClassifier::classify_horz_lines(std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal>& intersections)
+std::vector<ClassifiedLineSegment> LineClassifier::classify_horz_lines(std::unordered_map<Line, std::vector<Coordinate::Cartesian>,
+																						  container_hash, container_equal> &intersections)
 {
 	std::vector<ClassifiedLineSegment> classified_lines;
 	std::vector<Line> horizontal_lines;
-	for (auto& it : intersections)
+	for (auto &it : intersections)
 	{
 		if (!it.first.is_vertical())
 		{
@@ -210,7 +214,9 @@ std::vector<ClassifiedLineSegment> LineClassifier::classify_horz_lines(std::unor
  * @param[in] horz_lines - Vector of classified horizontal lines, used for classification of horizontal lines.
  * @return All classified lines segments.
  */
-std::vector<ClassifiedLineSegment> LineClassifier::classify_vert_lines(const std::unordered_map<Line, std::vector<Coordinate::Cartesian>, container_hash, container_equal>& vertical_intersections, const std::vector<ClassifiedLineSegment>& horz_lines)
+std::vector<ClassifiedLineSegment> LineClassifier::classify_vert_lines(const std::unordered_map<Line, std::vector<Coordinate::Cartesian>,
+																								container_hash, container_equal> &vertical_intersections,
+																	   const std::vector<ClassifiedLineSegment> &horz_lines)
 {
 	std::vector<ClassifiedLineSegment> classified_lines = horz_lines;
 
@@ -219,7 +225,7 @@ std::vector<ClassifiedLineSegment> LineClassifier::classify_vert_lines(const std
 	const ClassifiedLineSegment base_line_outter = get_target_line(horz_lines, LineClasses::BASE_LINE);
 	const ClassifiedLineSegment base_line = get_target_line(horz_lines, LineClasses::INNER_BASE_LINE);
 
-	for (auto& it : vertical_intersections)
+	for (auto &it : vertical_intersections)
 	{
 		for (Coordinate::Cartesian intersection : it.second)
 		{
@@ -227,27 +233,27 @@ std::vector<ClassifiedLineSegment> LineClassifier::classify_vert_lines(const std
 			if (intersection == service_line.origin)
 			{
 				Coordinate::Cartesian intercept_of_image_top = get_upper_image_intercept(it.second[0], it.second[1]);
-				classified_lines.push_back({ LineClasses::SINGLES_SIDELINE, base_line.origin, intercept_of_image_top });
+				classified_lines.push_back({LineClasses::SINGLES_SIDELINE, base_line.origin, intercept_of_image_top});
 			}
 			else if (intersection == service_line.destination)
 			{
 				Coordinate::Cartesian intercept_of_image_top = get_upper_image_intercept(it.second[0], it.second[1]);
-				classified_lines.push_back({ LineClasses::SINGLES_SIDELINE, base_line.destination, intercept_of_image_top });
+				classified_lines.push_back({LineClasses::SINGLES_SIDELINE, base_line.destination, intercept_of_image_top});
 			} // 2 Doubles Side Line
 			else if (intersection == base_line_outter.origin)
 			{
 				Coordinate::Cartesian intercept_of_image_top = get_upper_image_intercept(it.second[0], it.second[1]);
-				classified_lines.push_back({ LineClasses::DOUBLES_SIDELINE, base_line_outter.origin, intercept_of_image_top });
+				classified_lines.push_back({LineClasses::DOUBLES_SIDELINE, base_line_outter.origin, intercept_of_image_top});
 			}
 			else if (intersection == base_line_outter.destination)
 			{
 				Coordinate::Cartesian dest = get_upper_image_intercept(it.second[0], it.second[1]);
-				classified_lines.push_back({ LineClasses::DOUBLES_SIDELINE, base_line_outter.destination, dest });
+				classified_lines.push_back({LineClasses::DOUBLES_SIDELINE, base_line_outter.destination, dest});
 			} // Centre Service Line
 			else if (intersection == service_line_half.origin)
 			{
 				Coordinate::Cartesian dest = get_upper_image_intercept(it.second[0], it.second[1]);
-				classified_lines.push_back({ LineClasses::CENTRE_SERVICE_LINE, service_line_half.origin, dest });
+				classified_lines.push_back({LineClasses::CENTRE_SERVICE_LINE, service_line_half.origin, dest});
 			}
 		}
 	}
@@ -260,12 +266,12 @@ std::vector<ClassifiedLineSegment> LineClassifier::classify_vert_lines(const std
  * @param[in] target_class - The target line classification to find.
  * @return The target line segment.
  */
-ClassifiedLineSegment LineClassifier::get_target_line(const std::vector<ClassifiedLineSegment>& lines, const LineClasses target_class) const
+ClassifiedLineSegment LineClassifier::get_target_line(const std::vector<ClassifiedLineSegment> &lines, const LineClasses target_class) const
 {
-	for (const ClassifiedLineSegment& line : lines)
+	for (const ClassifiedLineSegment &line : lines)
 		if (line.line_class == target_class)
 			return line;
-	return ClassifiedLineSegment({ 0, 0 }, { 0, 0 }); //return default line segment
+	return ClassifiedLineSegment({0, 0}, {0, 0}); //return default line segment
 }
 
 /**
@@ -275,7 +281,8 @@ ClassifiedLineSegment LineClassifier::get_target_line(const std::vector<Classifi
  * @param[in] p2 - Second point of the line.
  * @return The coordinate at which y=0.
  */
-Coordinate::Cartesian LineClassifier::get_upper_image_intercept(const Coordinate::Cartesian p1, const Coordinate::Cartesian p2) const {
+Coordinate::Cartesian LineClassifier::get_upper_image_intercept(const Coordinate::Cartesian p1, const Coordinate::Cartesian p2) const
+{
 	const double m = static_cast<double>(p2.y - p1.y) / static_cast<double>(p2.x - p1.x);
 	const double c = static_cast<double>(p1.y) - static_cast<double>(m * p1.x);
 	return Coordinate::Cartesian((0 - c) / m, 0);
@@ -287,14 +294,15 @@ Coordinate::Cartesian LineClassifier::get_upper_image_intercept(const Coordinate
  * @param[in] lines - Classified lines to draw.
  * @param[in] image - Image to underlay lines on top of.
  */
-void LineClassifier::show_classified_lines(const std::vector<ClassifiedLineSegment>& lines, const Image& image, const bool show_markers, const std::vector<Coordinate::Cartesian>& intersections) const
+void LineClassifier::show_classified_lines(const std::vector<ClassifiedLineSegment> &lines,
+										   const Image &image, const bool show_markers, const std::vector<Coordinate::Cartesian> &intersections) const
 {
 	cv::Mat cv = image.convert_to_mat();
 	cv::cvtColor(cv, cv, cv::COLOR_GRAY2BGR);
 	constexpr int8_t text_line_offset = -10;
 	constexpr int8_t text_new_line_offset = -10;
 
-	for (const ClassifiedLineSegment& line : lines)
+	for (const ClassifiedLineSegment &line : lines)
 	{
 		cv::line(cv, cv::Point(line.origin.x, line.origin.y), cv::Point(line.destination.x, line.destination.y), cv::Scalar(0, 255, 0), 5);
 		Coordinate::Cartesian average_coord = (line.origin + line.destination) / 2;

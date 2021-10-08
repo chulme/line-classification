@@ -2,7 +2,7 @@
 
 #include <string_view>
 #include <vector>
-#include<structs.h>
+#include <structs.h>
 
 /**
  * @brief Basic helper class to manage images, and provides an interface to OpenCV for visualisation.
@@ -11,7 +11,7 @@ class Image
 {
 public:
 	Image(const std::string_view path, const uint32_t width, const uint32_t height);
-	Image(const std::vector<uint8_t>& vec, const uint32_t width, const uint32_t height);
+	Image(const std::vector<uint8_t> &vec, const uint32_t width, const uint32_t height);
 
 	void show(const std::string_view image_name) const;
 	std::vector<uint8_t> samples;
